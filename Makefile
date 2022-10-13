@@ -13,6 +13,12 @@ endif
 
 COPYPATH = /usr/$(ARCHPREFIX)/libcral.so
 
+wrapper:
+
+server:
+
+client:
+
 all: 
 	mkdir -p build/ 
 	cc $(GCC_OPTIONS) $(INCLUDE) $(FILES) $(LIBRARIES) -o build/libcral.so
