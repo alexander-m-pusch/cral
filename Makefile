@@ -14,6 +14,24 @@ else
 ARCHPREFIX = lib
 endif
 
+COMMAND = 
+
+ifndef NO_LDCONFIG
+COMMAND = ldconfig --verbose
+endif
+
+ifndef DESTDIR_LIBRARY
+DESTDIR_LIBRARY = /usr/local/$(ARCHPREFIX)/
+endif
+
+ifndef DESTDIR_SERVER
+DESTDIR_SERVER = /usr/local/bin/
+endif
+
+ifndef DESTDIR_CLIENT
+DESTDIR_CLIENT = /usr/local/bin/
+endif
+
 COPYPATH = /usr/local/$(ARCHPREFIX)/libcral.so
 
 all: library server client
@@ -32,17 +50,14 @@ client: library
 	$(MAKE) -C wrapper/client/
 
 install-client: client
-	if [ "$(id -u") != "0" ]; then $(error Must be root to install!); fi
-	cp -v build/client/cral /usr/local/bin/cral
+	cp -v build/client/cral $(DESTDIR_CLIENT)
 
 install-server: server
-	if [ "$(id -u)" != "0" ]; then $(error Must be root to install!); fi
-	cp -v build/server/cralserver /usr/local/bin/cralserver
+	cp -v build/server/cralserver $(DESTDIR_SERVER)
 
 install-library: library
-	if [ "$(id -u)" != "0" ]; then $(error Must be root to install!); fi
-	cp -v build/libcral.so $(COPYPATH)
-	ldconfig
+	cp -v build/libcral.so $(DESTDIR_LIBRARY)
+	$(COMMAND)
 
 clean:
 	rm -rf build/
