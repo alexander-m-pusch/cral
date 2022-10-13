@@ -5,24 +5,62 @@ INCLUDE = -Iinclude/
 LIBRARIES = 
 GCC_OPTIONS = -fPIC -shared -Wpedantic -Wall -Wl,--no-undefined
 
+CLIENT_LIBRARIES = -lcral -lssh
+SERVER_LIBRARIES = -lcral -lpthread -lssh
+
 ifeq ($(shell getconf LONG_BIT), 64)
 ARCHPREFIX = lib64
 else
 ARCHPREFIX = lib
 endif
 
-COPYPATH = /usr/$(ARCHPREFIX)/libcral.so
+COMMAND = 
 
-wrapper:
+ifndef NO_LDCONFIG
+COMMAND = ldconfig --verbose
+endif
 
-server:
+ifndef DESTDIR_LIBRARY
+DESTDIR_LIBRARY = /usr/local/$(ARCHPREFIX)/
+endif
 
-client:
+ifndef DESTDIR_SERVER
+DESTDIR_SERVER = /usr/local/bin/
+endif
 
-all: 
+ifndef DESTDIR_CLIENT
+DESTDIR_CLIENT = /usr/local/bin/
+endif
+
+COPYPATH = /usr/local/$(ARCHPREFIX)/libcral.so
+
+all: library server client
+.PHONY: all
+
+library: 
 	mkdir -p build/ 
 	cc $(GCC_OPTIONS) $(INCLUDE) $(FILES) $(LIBRARIES) -o build/libcral.so
 
-install: all
-	if [ "$(id -u)" != "0" ]; then $(error Must be root to install!); fi
-	cp -v build/libcral.so $(COPYPATH)
+server: library
+	mkdir -p build/server/
+	$(MAKE) -C wrapper/server/
+
+client: library
+	mkdir -p build/client/
+	$(MAKE) -C wrapper/client/
+
+install-client: client
+	cp -v build/client/cral $(DESTDIR_CLIENT)
+
+install-server: server
+	cp -v build/server/cralserver $(DESTDIR_SERVER)
+
+install-library: library
+	cp -v build/libcral.so $(DESTDIR_LIBRARY)
+	$(COMMAND)
+
+clean:
+	rm -rf build/
+
+install: install-client install-server install-library
+.PHONY: install
